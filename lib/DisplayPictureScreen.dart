@@ -1,7 +1,10 @@
+import 'dart:convert';
+import 'dart:html';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 
 class DisplayPictureScreen extends StatefulWidget {
   final XFile image;
@@ -39,8 +42,35 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     });
   }
 
-  void _getInfoFromModel() {
+  Future<void> _getInfoFromModel() async {
+    
+    Uri url = Uri.parse('http://127.0.0.1:8080/path');
 
+    final body = base64Encode(_imageBytes!);
+    
+    try {
+      var response = await http.post(url, body: body);
+      if (response.statusCode == 200) {
+        print('Response body: ${response.body}');
+        setState(() {
+          _price = "";
+          _category = "";
+        });
+      } else {
+        print('Request failed with status: ${response.statusCode}.');
+      }
+    } catch (e) {
+      print('Exception caught: $e');
+    }
+  }
+
+  Future<void> _getLocalInfoFromModel() async {
+    
+    try {
+      
+    } catch (e) {
+      print('Exception caught: $e');
+    }
   }
 
   @override
@@ -60,7 +90,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
           const Text("Use local model"),
         ],
       ),
-      TextButton.icon(onPressed: _getInfoFromModel, icon: const Icon(Icons.cloud_download), label: const Text("Get Info")),
+      TextButton.icon(onPressed: (!_localModelUseFlg) ? _getInfoFromModel : _getLocalInfoFromModel, icon: const Icon(Icons.cloud_download), label: const Text("Get Info")),
       Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
