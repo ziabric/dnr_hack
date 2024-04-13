@@ -23,6 +23,22 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   bool _localModelUseFlag = false;
   String _location = "";
 
+  final List<String> list = <String>[
+      "Москва, улица Тверская, дом 7, 125009",
+      "Санкт-Петербург, Невский проспект, дом 22, 191186",
+      "Новосибирск, улица Ленина, дом 12, 630099",
+      "Екатеринбург, проспект Ленина, дом 50, 620075",
+      "Казань, улица Баумана, дом 34, 420111",
+      "Нижний Новгород, улица Рождественская, дом 17, 603001",
+      "Челябинск, улица Свободы, дом 64, 454091",
+      "Омск, проспект Мира, дом 55, 644042",
+      "Ростов-на-Дону, проспект Буденновский, дом 1, 344002",
+      "Уфа, улица Ленина, дом 102, 450000"];
+
+  TextEditingController _city = TextEditingController();
+  TextEditingController _address = TextEditingController();
+  TextEditingController _building = TextEditingController();
+  TextEditingController _postCode = TextEditingController();
 
   @override
   void initState() {
@@ -34,6 +50,60 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     _imageBytes = await widget.image.readAsBytes();
     setState(() {
 
+    });
+  }
+
+  Future<void> _openAddressDialog() async {
+    showDialog(context: context, builder: (context) {
+      return Dialog(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          
+          children: [
+          TextFormField(
+            controller: _city,
+            decoration: const InputDecoration(labelText: "City"),
+          ),
+          TextFormField(
+            controller: _address,
+            decoration: const InputDecoration(labelText: "Address"),
+          ),
+          TextFormField(
+            controller: _building,
+            decoration: const InputDecoration(labelText: "Building"),
+          ),
+          TextFormField(
+            controller: _postCode,
+            decoration: const InputDecoration(labelText: "Post code"),
+          ),
+          // DropdownButton<String>(
+          //   value: dropdownValue,
+          //   onChanged: (String? value) {
+          //     // This is called when the user selects an item.
+          //     setState(() {
+          //       dropdownValue = value!;
+          //     });
+          //   },
+          //   items: list.map<DropdownMenuItem<String>>((String value) {
+          //     return DropdownMenuItem<String>(
+          //       value: value,
+          //       child: Text(value),
+          //     );
+          //   }).toList(),
+          // ),
+          TextButton.icon(
+            onPressed: () {
+              setState(() {
+                _location = "${_city.text}, ${_address.text}, ${_building.text}, ${_postCode.text}";
+                Navigator.pop(context);
+              });
+            }, 
+            icon: const Icon(Icons.save), 
+            label: const Text("Save")
+          )
+        ],
+        ),
+      );
     });
   }
 
@@ -98,7 +168,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
       
       // Формируем строку адреса
       setState(() {
-        _location = "${place.street}, ${place.locality}, ${place.postalCode}, ${place.country}";
+        _location = "${place.locality}, ${place.thoroughfare}, ${place.name}, ${place.postalCode}";
       });
       
     } catch (e) {
@@ -110,9 +180,11 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   @override
   Widget build(BuildContext context) {
     
+    String dropdownValue = list.last;
+
     final Size screenSize = MediaQuery.of(context).size;
     final double width = screenSize.width;
-    final double height = screenSize.height * 0.6;
+    final double height = screenSize.height * 0.5;
     _image = Image.memory(_imageBytes!, width: width, height: height,);
 
     List<Widget> listViewArray = [
@@ -123,7 +195,29 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
         TextButton.icon(onPressed: _sendReport, icon: const Icon(Icons.email), label: const Text("Send report")),
         TextButton.icon(onPressed: _sendReportLater, icon: const Icon(Icons.hourglass_full), label: const Text("Send report later")),
       ],),
-      TextButton.icon(onPressed: _updateLocation, icon: const Icon(Icons.location_on), label: const Text("Update address")),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          TextButton.icon(onPressed: _updateLocation, icon: const Icon(Icons.location_on), label: const Text("Update")),
+          TextButton.icon(onPressed: _openAddressDialog, icon: const Icon(Icons.mode_edit), label: const Text("Edit")),
+        ],
+      ),
+      DropdownButton<String>(
+        value: dropdownValue,
+        onChanged: (String? value) {
+          // This is called when the user selects an item.
+          setState(() {
+            // dropdownValue = value!;
+            _location = value!;
+          });
+        },
+        items: list.map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+      ),
       Text(_location)
     ];
 
