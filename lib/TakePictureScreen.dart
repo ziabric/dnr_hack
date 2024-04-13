@@ -25,7 +25,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
     super.initState();
     _controller = CameraController(
       widget.camera, 
-      ResolutionPreset.medium,
+      ResolutionPreset.high,
       enableAudio: false, 
       imageFormatGroup: ImageFormatGroup.jpeg
     );
@@ -77,39 +77,35 @@ class TakePictureScreenState extends State<TakePictureScreen> {
     }
   }
 
-  // Future<void> _logout() async {
-  //   setState(() {
-  //     _loginFlag = false;
-  //     Navigator.pop(context);
-  //   });
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Photo')),
-      body: Column(children: [
-        FutureBuilder<void>(
-        future: _initializeControllerFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return CameraPreview(_controller);
-          } else {
-            return const Center(child: CircularProgressIndicator());
-          }
-        },),
+      // appBar: AppBar(title: const Text('Photo')),
+      body: Stack(children: [
         Center(
+          child: FutureBuilder<void>(
+            future: _initializeControllerFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                return CameraPreview(_controller);
+              } else {
+                return const Center(child: CircularProgressIndicator());
+              }
+            },),
+        ),
+        Container(
+          padding: EdgeInsets.all(10),
+          alignment: Alignment.bottomCenter,
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Spacer(flex: 1,),
-              IconButton.filled(onPressed: _openPhoto, icon: const Icon(Icons.file_open), iconSize: 20,),
-              const Spacer(flex: 1,),
-              IconButton.filled(onPressed: _takePicture, icon: const Icon(Icons.photo_camera), iconSize: 20,),
-              const Spacer(flex: 1,),
-              // IconButton.filled(onPressed: _logout, icon: const Icon(Icons.logout), iconSize: 20,),
-              // const Spacer(flex: 1,),
+            const Spacer(flex: 1,),
+            IconButton.filled(onPressed: _openPhoto, icon: const Icon(Icons.file_open), iconSize: 40,),
+            const Spacer(flex: 1,),
+            IconButton.filled(onPressed: _takePicture, icon: const Icon(Icons.photo_camera), iconSize: 40,),
+            const Spacer(flex: 1,),
+            IconButton.filled(onPressed: (){Navigator.pop(context);}, icon: const Icon(Icons.close), iconSize: 40,),
+            const Spacer(flex: 1,),
         ],),
         )
       ],),

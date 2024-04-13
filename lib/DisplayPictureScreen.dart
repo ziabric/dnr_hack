@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
@@ -22,18 +23,6 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   Image? _image;
   bool _localModelUseFlag = false;
   String _location = "";
-
-  final List<String> list = <String>[
-      "Москва, улица Тверская, дом 7, 125009",
-      "Санкт-Петербург, Невский проспект, дом 22, 191186",
-      "Новосибирск, улица Ленина, дом 12, 630099",
-      "Екатеринбург, проспект Ленина, дом 50, 620075",
-      "Казань, улица Баумана, дом 34, 420111",
-      "Нижний Новгород, улица Рождественская, дом 17, 603001",
-      "Челябинск, улица Свободы, дом 64, 454091",
-      "Омск, проспект Мира, дом 55, 644042",
-      "Ростов-на-Дону, проспект Буденновский, дом 1, 344002",
-      "Уфа, улица Ленина, дом 102, 450000"];
 
   TextEditingController _city = TextEditingController();
   TextEditingController _address = TextEditingController();
@@ -76,21 +65,6 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
             controller: _postCode,
             decoration: const InputDecoration(labelText: "Post code"),
           ),
-          // DropdownButton<String>(
-          //   value: dropdownValue,
-          //   onChanged: (String? value) {
-          //     // This is called when the user selects an item.
-          //     setState(() {
-          //       dropdownValue = value!;
-          //     });
-          //   },
-          //   items: list.map<DropdownMenuItem<String>>((String value) {
-          //     return DropdownMenuItem<String>(
-          //       value: value,
-          //       child: Text(value),
-          //     );
-          //   }).toList(),
-          // ),
           TextButton.icon(
             onPressed: () {
               setState(() {
@@ -107,18 +81,81 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     });
   }
 
-  Future<void> _sendReport() async {
-    
-    await _updateLocation();
+  Future<void> _selectFromList() async {
 
-    Uri url = Uri.parse('http://127.0.0.1:8080/path');
+    final List<String> list = <String>[
+      "Москва, улица Тверская, дом 7, 125009",
+      "Санкт-Петербург, Невский проспект, дом 22, 191186",
+      "Новосибирск, улица Ленина, дом 12, 630099",
+      "Екатеринбург, проспект Ленина, дом 50, 620075",
+      "Казань, улица Баумана, дом 34, 420111",
+      "Нижний Новгород, улица Рождественская, дом 17, 603001",
+      "Челябинск, улица Свободы, дом 64, 454091",
+      "Омск, проспект Мира, дом 55, 644042",
+      "Ростов-на-Дону, проспект Буденновский, дом 1, 344002",
+      "Уфа, улица Ленина, дом 102, 450000"
+    ];
+
+
+    showDialog(context: context, builder: (context) {
+      return Dialog(
+        child: ListView.builder(
+        itemCount: list.length,
+        itemBuilder: (context, index) {
+          return Container(
+            padding: const EdgeInsets.all(10),
+            alignment: Alignment.topLeft,
+            child: TextButton.icon(
+            onPressed: (){
+              setState(() {
+                _location = list[index];
+              });
+              Navigator.pop(context);
+            }, 
+            icon: const Icon(Icons.location_on), 
+            label: Text(list[index])
+          ),
+          );
+        },
+      ),
+      );
+    });
+  }
+
+  Future<void> _sendReport() async {
+
+    Uri url = Uri.parse('http://46.34.144.174:8000/image-to-text/');
 
     final body = base64Encode(_imageBytes!);
     
+    String bodyTmp = "{loc:\"$_location\", image_base64:\"$body\"}";
+
     try {
-      var response = await http.post(url, body: body);
+      var response = await http.post(url, headers: {'Content-Type': 'application/json; charset=utf-8',}, body: bodyTmp);
       if (response.statusCode == 200) {
         print('Response body: ${response.body}');
+
+        showDialog(context: context, builder: 
+            (context) {
+              return Dialog(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.thumb_up),
+                      Text(utf8.decode(response.bodyBytes)),
+                      TextButton(onPressed: (){
+                        Navigator.pop(context);
+                      }, 
+                      child: const Text("Close"))
+                    ],
+                  ),
+                )
+              );
+            }
+        );
+
         setState(() {
 
         });
@@ -132,8 +169,6 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
 
   Future<void> _sendReportLater() async {
     
-    await _updateLocation();
-    
     try {
       
     } catch (e) {
@@ -142,6 +177,12 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   }
 
   Future<void> _updateLocation() async {
+
+    if (_city.text == "" || _address.text == "" || _building.text == "")
+    {
+      return;
+    }
+
     try {
       // Запрашиваем разрешение на использование геолокации
       LocationPermission permission = await Geolocator.checkPermission();
@@ -180,7 +221,6 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   @override
   Widget build(BuildContext context) {
     
-    String dropdownValue = list.last;
 
     final Size screenSize = MediaQuery.of(context).size;
     final double width = screenSize.width;
@@ -200,25 +240,14 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
         children: [
           TextButton.icon(onPressed: _updateLocation, icon: const Icon(Icons.location_on), label: const Text("Update")),
           TextButton.icon(onPressed: _openAddressDialog, icon: const Icon(Icons.mode_edit), label: const Text("Edit")),
+          TextButton.icon(onPressed: _selectFromList, icon: const Icon(Icons.format_list_bulleted), label: const Text("From list")),
         ],
       ),
-      DropdownButton<String>(
-        value: dropdownValue,
-        onChanged: (String? value) {
-          // This is called when the user selects an item.
-          setState(() {
-            // dropdownValue = value!;
-            _location = value!;
-          });
-        },
-        items: list.map<DropdownMenuItem<String>>((String value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(value),
-          );
-        }).toList(),
-      ),
-      Text(_location)
+      Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(20),
+        child: Text(_location),
+      )
     ];
 
     return Scaffold(
