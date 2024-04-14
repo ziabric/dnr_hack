@@ -1,0 +1,12 @@
+fastapi
+pydantic
+easyocr
+pillow
+pandas
+pymorphy2
+natasha
+transformers
+torch
+scikit-learn
+pickle5
+openpyxl
