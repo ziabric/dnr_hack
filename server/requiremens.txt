@@ -10,3 +10,4 @@ torch
 scikit-learn
 pickle5
 openpyxl
+regex
